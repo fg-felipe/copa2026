@@ -373,13 +373,16 @@ function setLoginTab(t){
   document.getElementById('form-criar').style.display=t==='criar'?'':'none';
 }
 
+function lsGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
+function lsSet(key,val){try{localStorage.setItem(key,val);return true;}catch(e){return false;}}
+function lsDel(key){try{localStorage.removeItem(key);}catch(e){}}
+function lsKeys(prefix){try{return Object.keys(localStorage).filter(k=>k.startsWith(prefix));}catch(e){return[];}}
+
 async function loadAllUsers(){
   try{
-    const r=await window.storage.list('copa26:',true);
-    if(!r||!r.keys||!r.keys.length)return;
-    const res=await Promise.all(r.keys.map(k=>window.storage.get(k,true)));
+    const keys=lsKeys('copa26:');
     allUsers={};
-    res.forEach(x=>{if(x&&x.value){try{const u=JSON.parse(x.value);allUsers[u.nick]=u;}catch(e){}}});
+    keys.forEach(k=>{const v=lsGet(k);if(v){try{const u=JSON.parse(v);allUsers[u.nick]=u;}catch(e){}}});
   }catch(e){}
 }
 
@@ -387,7 +390,7 @@ async function saveMyData(){
   if(!currentUser)return;
   const entry=allUsers[currentUser]||{};
   const payload={...entry,nick:currentUser,data:myData,updated:Date.now()};
-  await window.storage.set('copa26:'+currentUser.toLowerCase(),JSON.stringify(payload),true);
+  lsSet('copa26:'+currentUser.toLowerCase(),JSON.stringify(payload));
   allUsers[currentUser]={...payload};
 }
 
@@ -423,7 +426,7 @@ async function doCriar(){
     if(allUsers[nick]){showMsg('criar-msg','Este apelido já existe. Escolha outro.','err');return;}
     const data={};TIMES.forEach(t=>{data[t.id]=emptyTeam(t);});
     const entry={nick,pinHash:hashPin(pin),data,created:Date.now(),updated:Date.now()};
-    await window.storage.set('copa26:'+nick.toLowerCase(),JSON.stringify(entry),true);
+    lsSet('copa26:'+nick.toLowerCase(),JSON.stringify(entry));
     allUsers[nick]=entry;
     enterApp(nick,data);
   }catch(e){showMsg('criar-msg','Erro ao criar conta. Tente novamente.','err');}
@@ -453,7 +456,7 @@ async function doDelete(){
   if(!entry||entry.pinHash!==hashPin(pin)){showMsg('del-msg','Senha incorreta','err');return;}
   showMsg('del-msg','<span class="spin"></span>Excluindo…','info');
   try{
-    await window.storage.delete('copa26:'+currentUser.toLowerCase(),true);
+    lsDel('copa26:'+currentUser.toLowerCase());
     delete allUsers[currentUser];
     showMsg('del-msg','Conta excluída!','ok');
     setTimeout(()=>doLogout(),1500);
