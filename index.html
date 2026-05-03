@@ -169,37 +169,13 @@ html,body{font-family:var(--font-body);background:#f0f2f5;min-height:100vh;color
       <div class="login-hero-sub">Copa do Mundo 2026 · Panini Oficial</div>
     </div>
     <div class="card">
-      <div class="tabs-login">
-        <button class="tab-login on" id="tab-entrar" onclick="setLoginTab('entrar')">Entrar</button>
-        <button class="tab-login" id="tab-criar" onclick="setLoginTab('criar')">Criar conta</button>
-      </div>
       <div id="form-entrar">
-        <div class="lbl">Apelido</div>
-        <input id="in-nick" class="input" placeholder="Seu apelido" maxlength="20" style="margin-bottom:12px" onkeydown="if(event.key==='Enter')document.getElementById('in-pin').focus()">
-        <div class="lbl">Senha (4 dígitos)</div>
-        <div class="pin-row">
-          <input class="pin-digit" id="in-pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="•" oninput="fmtPin(this)" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-        <div style="font-size:12px;color:#aaa;text-align:center;margin-bottom:14px">4 dígitos numéricos</div>
+        <div class="lbl">Seu apelido no grupo</div>
+        <input id="in-nick" class="input" placeholder="Ex: João, Pai, Mari…" maxlength="20" style="margin-bottom:6px" onkeydown="if(event.key==='Enter')doLogin()">
+        <div style="font-size:12px;color:#aaa;margin-bottom:14px">Use sempre o mesmo apelido para manter seus dados</div>
         <div id="login-msg"></div>
         <button class="btn btn-green" onclick="doLogin()">Entrar →</button>
-      </div>
-      <div id="form-criar" style="display:none">
-        <div class="lbl">Apelido</div>
-        <input id="cr-nick" class="input" placeholder="Ex: João, Pai, Mari…" maxlength="20" style="margin-bottom:12px">
-        <div class="lbl">Senha (4 dígitos)</div>
-        <div class="pin-row">
-          <input class="pin-digit" id="cr-pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="•" oninput="fmtPin(this)">
-        </div>
-        <div style="font-size:12px;color:#aaa;text-align:center;margin-bottom:10px">4 dígitos</div>
-        <div class="lbl">Confirmar senha</div>
-        <div class="pin-row">
-          <input class="pin-digit" id="cr-pin2" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="•" oninput="fmtPin(this)">
-        </div>
-        <div style="height:14px"></div>
-        <div id="criar-msg"></div>
-        <button class="btn btn-green" onclick="doCriar()">Criar conta →</button>
-      </div>
+      </div></div>
     </div>
     <div style="text-align:center;font-size:12px;color:#bbb;margin-top:10px">Dados na nuvem · Compartilhados com o grupo</div>
   </div>
@@ -309,10 +285,8 @@ html,body{font-family:var(--font-body);background:#f0f2f5;min-height:100vh;color
       <div class="card" style="border-color:#ef9a9a">
         <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:6px;font-family:var(--font-head);letter-spacing:.3px">EXCLUIR MINHA CONTA</div>
         <div style="font-size:13px;color:var(--gray-d);margin-bottom:14px">Confirme sua senha para excluir todos os seus dados permanentemente.</div>
-        <div class="lbl">Senha para confirmar</div>
-        <div class="pin-row" style="justify-content:flex-start;margin-bottom:14px">
-          <input class="pin-digit" id="del-pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="•" oninput="fmtPin(this)">
-        </div>
+        <div class="lbl">Digite "excluir" para confirmar</div>
+        <input id="del-confirm" class="input" placeholder="excluir" maxlength="10" style="margin-bottom:14px">
         <div id="del-msg"></div>
         <button class="btn btn-danger" onclick="doDelete()">Excluir conta permanentemente</button>
       </div>
@@ -356,27 +330,22 @@ const TIMES=[
   {id:'cameroon',nome:'Camarões',flag:'🇨🇲',grupo:'H',total:20},
 ];
 const COLORS=['#007a42','#003399','#c8102e','#854f0b','#534ab7','#993556','#0f6e56','#993c1d'];
-let currentUser=null,myData={},allUsers={},currentTeam=null,rkMode=0,mType='have',loginTab='entrar';
+let currentUser=null,myData={},allUsers={},currentTeam=null,rkMode=0,mType='have';
 
 function avatarColor(n){return COLORS[(n||'?').charCodeAt(0)%COLORS.length];}
 function initials(n){return(n||'?').slice(0,2).toUpperCase();}
-function hashPin(pin){let h=0;for(let i=0;i<pin.length;i++){h=((h<<5)-h)+pin.charCodeAt(i);h|=0;}return h.toString(36);}
+
 function emptyTeam(t){const d={have:{},rep:{}};for(let i=1;i<=t.total;i++){d.have[i]=false;d.rep[i]=0;}return d;}
 function ensureUser(data){TIMES.forEach(t=>{if(!data[t.id])data[t.id]=emptyTeam(t);});return data;}
 function fmtPin(el){el.value=el.value.replace(/\D/g,'').slice(0,4);}
 
-function setLoginTab(t){
-  loginTab=t;
-  document.getElementById('tab-entrar').classList.toggle('on',t==='entrar');
-  document.getElementById('tab-criar').classList.toggle('on',t==='criar');
-  document.getElementById('form-entrar').style.display=t==='entrar'?'':'none';
-  document.getElementById('form-criar').style.display=t==='criar'?'':'none';
-}
+
 
 function lsGet(key){try{return localStorage.getItem(key);}catch(e){return null;}}
 function lsSet(key,val){try{localStorage.setItem(key,val);return true;}catch(e){return false;}}
 function lsDel(key){try{localStorage.removeItem(key);}catch(e){}}
 function lsKeys(prefix){try{return Object.keys(localStorage).filter(k=>k.startsWith(prefix));}catch(e){return[];}}
+function fmtPin(el){el.value=el.value.replace(/\D/g,'').slice(0,4);}
 
 async function loadAllUsers(){
   try{
@@ -402,35 +371,23 @@ function showMsg(id,html,type,dur=0){
 
 async function doLogin(){
   const nick=document.getElementById('in-nick').value.trim();
-  const pin=document.getElementById('in-pin').value.trim();
   if(!nick||nick.length<2){showMsg('login-msg','Apelido precisa ter ao menos 2 letras','err');return;}
-  if(pin.length!==4||!/^\d{4}$/.test(pin)){showMsg('login-msg','Senha precisa ter exatamente 4 dígitos','err');return;}
-  showMsg('login-msg','<span class="spin"></span>Verificando…','info');
-  await loadAllUsers();
-  const existing=allUsers[nick];
-  if(!existing){showMsg('login-msg','Apelido não encontrado. Crie uma conta.','err');return;}
-  if(existing.pinHash!==hashPin(pin)){showMsg('login-msg','Senha incorreta','err');return;}
-  enterApp(nick,ensureUser(JSON.parse(JSON.stringify(existing.data||{}))));
-}
-
-async function doCriar(){
-  const nick=document.getElementById('cr-nick').value.trim();
-  const pin=document.getElementById('cr-pin').value.trim();
-  const pin2=document.getElementById('cr-pin2').value.trim();
-  if(!nick||nick.length<2){showMsg('criar-msg','Apelido precisa ter ao menos 2 letras','err');return;}
-  if(pin.length!==4||!/^\d{4}$/.test(pin)){showMsg('criar-msg','Senha precisa ter exatamente 4 dígitos','err');return;}
-  if(pin!==pin2){showMsg('criar-msg','As senhas não conferem','err');return;}
-  showMsg('criar-msg','<span class="spin"></span>Criando conta…','info');
+  showMsg('login-msg','<span class="spin"></span>Carregando…','info');
   try{
     await loadAllUsers();
-    if(allUsers[nick]){showMsg('criar-msg','Este apelido já existe. Escolha outro.','err');return;}
-    const data={};TIMES.forEach(t=>{data[t.id]=emptyTeam(t);});
-    const entry={nick,pinHash:hashPin(pin),data,created:Date.now(),updated:Date.now()};
-    lsSet('copa26:'+nick.toLowerCase(),JSON.stringify(entry));
-    allUsers[nick]=entry;
-    enterApp(nick,data);
-  }catch(e){showMsg('criar-msg','Erro ao criar conta. Tente novamente.','err');}
+    if(allUsers[nick]){
+      enterApp(nick,ensureUser(JSON.parse(JSON.stringify(allUsers[nick].data||{}))));
+    } else {
+      const data={};TIMES.forEach(t=>{data[t.id]=emptyTeam(t);});
+      const entry={nick,data,created:Date.now(),updated:Date.now()};
+      lsSet('copa26:'+nick.toLowerCase(),JSON.stringify(entry));
+      allUsers[nick]=entry;
+      enterApp(nick,data);
+    }
+  }catch(e){showMsg('login-msg','Erro ao entrar. Tente novamente.','err');}
 }
+
+
 
 function enterApp(nick,data){
   currentUser=nick;myData=data;
@@ -446,14 +403,12 @@ function doLogout(){
   document.getElementById('login-screen').style.display='';
   document.getElementById('hdr-user').textContent='Entre com seu apelido';
   document.getElementById('hdr-stat').textContent='';
-  document.getElementById('in-nick').value='';document.getElementById('in-pin').value='';
+  document.getElementById('in-nick').value='';
 }
 
 async function doDelete(){
-  const pin=document.getElementById('del-pin').value.trim();
-  if(pin.length!==4){showMsg('del-msg','Informe sua senha de 4 dígitos','err');return;}
-  const entry=allUsers[currentUser];
-  if(!entry||entry.pinHash!==hashPin(pin)){showMsg('del-msg','Senha incorreta','err');return;}
+  const confirm=document.getElementById('del-confirm').value.trim().toLowerCase();
+  if(confirm!=='excluir'){showMsg('del-msg','Digite "excluir" para confirmar','err');return;}
   showMsg('del-msg','<span class="spin"></span>Excluindo…','info');
   try{
     lsDel('copa26:'+currentUser.toLowerCase());
